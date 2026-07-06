@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# Local environments and pretrained weight caches.
+.venv/
+.torch/
+
+# Codex/session metadata.
+.agents/
+.codex/
+.git/
+.upload_git/
+
+# Large intermediate feature caches that can be regenerated.
+results/moe_classifier/**/feature_cache/
+results/tta_features/

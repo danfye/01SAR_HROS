@@ -1,0 +1,173 @@
+{
+  "accuracy": 0.9154545664787292,
+  "logits_key": "tta_logits",
+  "runs": [
+    {
+      "run": "results/sar_finetune/resnet18_size160_seed42",
+      "weight": 1.0,
+      "accuracy": 0.9127272963523865
+    },
+    {
+      "run": "results/sar_finetune/resnet18_size160_seed7",
+      "weight": 1.0,
+      "accuracy": 0.9045454263687134
+    },
+    {
+      "run": "results/sar_finetune/resnet18_size160_seed123",
+      "weight": 1.0,
+      "accuracy": 0.9009090662002563
+    }
+  ],
+  "weights": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "class_names": [
+    "airplane",
+    "beach",
+    "bridge",
+    "crosswalk",
+    "golf_course",
+    "oil_tank",
+    "Photovoltaic",
+    "river",
+    "runway",
+    "ship"
+  ],
+  "per_class_accuracy": {
+    "airplane": 0.8545454545454545,
+    "beach": 0.9272727272727272,
+    "bridge": 0.8090909090909091,
+    "crosswalk": 0.9090909090909091,
+    "golf_course": 0.9090909090909091,
+    "oil_tank": 0.9090909090909091,
+    "Photovoltaic": 0.9818181818181818,
+    "river": 0.9,
+    "runway": 0.9545454545454546,
+    "ship": 1.0
+  },
+  "confusion_matrix": [
+    [
+      94,
+      2,
+      4,
+      0,
+      0,
+      2,
+      0,
+      0,
+      4,
+      4
+    ],
+    [
+      1,
+      102,
+      4,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1
+    ],
+    [
+      1,
+      1,
+      89,
+      10,
+      0,
+      0,
+      0,
+      3,
+      0,
+      6
+    ],
+    [
+      0,
+      0,
+      0,
+      100,
+      0,
+      0,
+      8,
+      0,
+      2,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      1,
+      100,
+      0,
+      0,
+      8,
+      1,
+      0
+    ],
+    [
+      0,
+      2,
+      4,
+      4,
+      0,
+      100,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      108,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      3,
+      0,
+      5,
+      0,
+      0,
+      0,
+      99,
+      3,
+      0
+    ],
+    [
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      105,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      110
+    ]
+  ],
+  "num_samples": 1100
+}
