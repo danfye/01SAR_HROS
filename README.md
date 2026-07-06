@@ -27,6 +27,26 @@ results/sar_finetune/tta_ensemble_weighted_metrics.json
 
 For a conservative reported number, use the equal-weight ensemble: `91.55%`.
 
+## SAR Confusion / Interference Matrix
+
+The SAR test-set confusion matrix is included to inspect per-class behavior, not only the headline accuracy. This helps check whether the model is relying on a few easy classes while failing on specific categories.
+
+![SAR confusion matrix](image/sar_tta_ensemble_confusion_matrix.png)
+
+Generated files:
+
+```text
+image/sar_tta_ensemble_confusion_matrix.csv
+image/sar_tta_ensemble_confusion_matrix.png
+image/sar_tta_ensemble_confusion_matrix.svg
+```
+
+Regenerate the matrix from the saved ensemble metrics:
+
+```bash
+.venv/bin/python scripts/plot_sar_confusion_matrix.py
+```
+
 ## Data Layout
 
 ```text
@@ -90,6 +110,7 @@ saved_metrics=results/sar_finetune/tta_ensemble_metrics.json
 - `scripts/train_moe_classifier.py`: feature-level MoE classifier over multiple frozen backbones.
 - `scripts/train_sar_finetune.py`: final SAR fine-tuning workflow.
 - `scripts/evaluate_sar_tta_ensemble.py`: final SAR ensemble evaluator.
+- `scripts/plot_sar_confusion_matrix.py`: exports SAR test confusion matrix as CSV, PNG, and SVG.
 
 ## Notes
 
