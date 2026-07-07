@@ -15,3 +15,9 @@ __pycache__/
 # Large intermediate feature caches that can be regenerated.
 results/moe_classifier/**/feature_cache/
 results/tta_features/
+results/sar_finetune/logit_cache/
+
+# Local exploratory sweeps; keep only selected result directories tracked.
+results/moe_classifier/SAR_diffusion_3branch/
+results/sar_finetune/diffusion_residual_fusion*/
+results/sar_finetune/three_branch_diffusion_fusion*/

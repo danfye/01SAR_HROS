@@ -15,6 +15,7 @@ import os
 import time
 from pathlib import Path
 
+import numpy as np
 import torch
 from PIL import Image
 from torch import nn
@@ -23,6 +24,7 @@ from torchvision import models
 
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"}
+DIFFUSION_EXPERTS = {"diffusion", "diffusion_stats"}
 
 
 class ImageFolderByClassName(Dataset):
@@ -118,7 +120,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--experts",
         default="resnet18,resnet34,resnet50,densenet121",
-        help="Comma-separated experts: resnet18,resnet34,resnet50,densenet121.",
+        help=(
+            "Comma-separated experts: resnet18,resnet34,resnet50,densenet121,"
+            "diffusion,diffusion_stats."
+        ),
     )
     parser.add_argument("--epochs", default=300, type=int)
     parser.add_argument("--batch-size", default=256, type=int)
@@ -198,6 +203,96 @@ def build_backbone(name: str, pretrained: bool) -> tuple[nn.Module, object, int,
     return model, transform, feature_dim, weights_name
 
 
+def heat_diffuse(array: np.ndarray, steps: int, rate: float = 0.18) -> np.ndarray:
+    out = array.astype(np.float32, copy=True)
+    for _ in range(steps):
+        padded = np.pad(out, 1, mode="reflect")
+        laplacian = (
+            padded[:-2, 1:-1]
+            + padded[2:, 1:-1]
+            + padded[1:-1, :-2]
+            + padded[1:-1, 2:]
+            - 4.0 * out
+        )
+        out = np.clip(out + rate * laplacian, 0.0, 1.0)
+    return out
+
+
+def pooled_map_features(array: np.ndarray, pooled_size: int) -> np.ndarray:
+    image = Image.fromarray(np.uint8(np.clip(array, 0.0, 1.0) * 255.0), mode="L")
+    resampling = getattr(Image, "Resampling", Image).BILINEAR
+    pooled = image.resize((pooled_size, pooled_size), resampling)
+    values = np.asarray(pooled, dtype=np.float32).reshape(-1) / 255.0
+    return values
+
+
+def map_summary_features(array: np.ndarray) -> np.ndarray:
+    gx = np.diff(array, axis=1)
+    gy = np.diff(array, axis=0)
+    gradient_energy = float(np.mean(gx * gx) + np.mean(gy * gy))
+    quantiles = np.quantile(array, [0.1, 0.25, 0.5, 0.75, 0.9]).astype(np.float32)
+    summary = np.asarray(
+        [
+            float(array.mean()),
+            float(array.std()),
+            float(array.min()),
+            float(array.max()),
+            gradient_energy,
+        ],
+        dtype=np.float32,
+    )
+    return np.concatenate([summary, quantiles])
+
+
+def diffusion_feature_from_path(
+    path: Path,
+    image_size: int = 64,
+    pooled_size: int = 16,
+) -> np.ndarray:
+    resampling = getattr(Image, "Resampling", Image).BILINEAR
+    with Image.open(path) as image:
+        image = image.convert("L").resize((image_size, image_size), resampling)
+        base = np.asarray(image, dtype=np.float32) / 255.0
+
+    feature_blocks = []
+    previous = base
+    for steps in [0, 1, 2, 4, 8, 16]:
+        diffused = base if steps == 0 else heat_diffuse(base, steps)
+        feature_blocks.append(pooled_map_features(diffused, pooled_size))
+        feature_blocks.append(map_summary_features(diffused))
+        if steps > 0:
+            residual = np.abs(previous - diffused)
+            feature_blocks.append(pooled_map_features(residual, pooled_size))
+            feature_blocks.append(map_summary_features(residual))
+        previous = diffused
+
+    return np.concatenate(feature_blocks).astype(np.float32)
+
+
+def extract_diffusion_features(
+    data_root: Path,
+    split: str,
+    class_names: list[str],
+) -> tuple[torch.Tensor, torch.Tensor, list[str], int, str]:
+    dataset = ImageFolderByClassName(data_root, split, class_names, transform=None)
+    features = []
+    labels = []
+    image_paths = []
+    for image_path, label in dataset.samples:
+        features.append(diffusion_feature_from_path(image_path))
+        labels.append(label)
+        image_paths.append(str(image_path))
+    out_features = torch.from_numpy(np.stack(features))
+    out_labels = torch.tensor(labels, dtype=torch.long)
+    return (
+        out_features,
+        out_labels,
+        image_paths,
+        int(out_features.shape[1]),
+        "heat_diffusion_stats_v1",
+    )
+
+
 def cache_file(cache_dir: Path, data_root: Path, split: str, expert: str) -> Path:
     return cache_dir / f"{data_root.name}_{split}_{expert}.pt"
 
@@ -226,6 +321,25 @@ def extract_or_load_features(
                 int(payload["feature_dim"]),
                 str(payload["weights"]),
             )
+
+    if expert in DIFFUSION_EXPERTS:
+        out_features, out_labels, image_paths, feature_dim, weights_name = (
+            extract_diffusion_features(data_root, split, class_names)
+        )
+        payload = {
+            "features": out_features,
+            "labels": out_labels,
+            "paths": image_paths,
+            "class_names": class_names,
+            "pretrained": pretrained,
+            "feature_dim": feature_dim,
+            "weights": weights_name,
+        }
+        if use_cache:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            torch.save(payload, path)
+            print(f"saved_cache={path}", flush=True)
+        return out_features, out_labels, image_paths, feature_dim, weights_name
 
     model, transform, feature_dim, weights_name = build_backbone(expert, pretrained)
     model.to(device)

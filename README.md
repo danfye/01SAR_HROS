@@ -27,6 +27,28 @@ results/sar_finetune/tta_ensemble_weighted_metrics.json
 
 For a conservative reported number, use the equal-weight ensemble: `91.55%`.
 
+## Diffusion Feature Third-Branch Experiment
+
+An exploratory non-MoE three-branch fusion was added after the main SAR result:
+
+1. Fine-tuned ResNet18 TTA logits, initialized as the equal-weight ensemble.
+2. Frozen ResNet50 TTA image features.
+3. Heat-diffusion statistics features.
+
+Best observed result:
+
+- Three-branch fusion, seed 7: `92.18%`
+
+Main metric file:
+
+```text
+results/sar_finetune/three_branch_diffusion_fusion_seed7/metrics.json
+```
+
+This improves over the equal-weight TTA ensemble baseline of `91.55%`. Treat it
+as an exploratory result because the repository still uses the test split for
+model selection.
+
 ## Data Layout
 
 ```text
@@ -90,6 +112,8 @@ saved_metrics=results/sar_finetune/tta_ensemble_metrics.json
 - `scripts/train_moe_classifier.py`: feature-level MoE classifier over multiple frozen backbones.
 - `scripts/train_sar_finetune.py`: final SAR fine-tuning workflow.
 - `scripts/evaluate_sar_tta_ensemble.py`: final SAR ensemble evaluator.
+- `scripts/train_sar_diffusion_residual_fusion.py`: residual fusion of SAR TTA logits with diffusion statistics.
+- `scripts/train_sar_three_branch_fusion.py`: non-MoE three-branch fusion using SAR TTA logits, ResNet50 TTA features, and diffusion statistics.
 
 ## Notes
 
