@@ -21,3 +21,7 @@ results/sar_finetune/logit_cache/
 results/moe_classifier/SAR_diffusion_3branch/
 results/sar_finetune/diffusion_residual_fusion*/
 results/sar_finetune/three_branch_diffusion_fusion*/
+results/sar_finetune/deep_diffusion_features/*.pt
+results/sar_finetune/three_branch_deep_diffusion_fusion*/
+!results/sar_finetune/three_branch_deep_diffusion_fusion_h256_d55_lr1_wd10_trainlogit_id_seed123/
+results/sar_finetune/three_branch_deep_diffusion_fusion_h256_d55_lr1_wd10_trainlogit_id_seed123/fusion.pt

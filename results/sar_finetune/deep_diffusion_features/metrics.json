@@ -1,0 +1,51 @@
+{
+  "feature_type": "deep_diffusion_ddpm",
+  "weights": "tiny_sar_ddpm_v1",
+  "data_root": "SAR",
+  "class_names": [
+    "airplane",
+    "beach",
+    "bridge",
+    "crosswalk",
+    "golf_course",
+    "oil_tank",
+    "Photovoltaic",
+    "river",
+    "runway",
+    "ship"
+  ],
+  "checkpoint": "results/sar_finetune/deep_diffusion_features/diffusion_encoder.pt",
+  "train_cache": "results/sar_finetune/deep_diffusion_features/SAR_train_deep_diffusion.pt",
+  "test_cache": "results/sar_finetune/deep_diffusion_features/SAR_test_deep_diffusion.pt",
+  "train_samples": 2000,
+  "test_samples": 1100,
+  "feature_dim": 5376,
+  "feature_timesteps": [
+    0,
+    50,
+    100,
+    150
+  ],
+  "args": {
+    "data_root": "SAR",
+    "output_dir": "results/sar_finetune/deep_diffusion_features",
+    "checkpoint": null,
+    "image_size": 64,
+    "timesteps": 200,
+    "feature_timesteps": "0,50,100,150",
+    "epochs": 50,
+    "batch_size": 64,
+    "feature_batch_size": 128,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "base_channels": 32,
+    "time_dim": 128,
+    "gradient_clip": 1.0,
+    "seed": 42,
+    "threads": 8,
+    "num_workers": 0,
+    "device": "cpu",
+    "force_train": true,
+    "extract_only": false
+  }
+}

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Train a non-MoE three-branch SAR fusion head.
+"""Train a three-branch SAR fusion head.
 
 Branches:
 1. Existing fine-tuned ResNet18 TTA logits, initialized as the equal-weight ensemble.
 2. Frozen ResNet50 TTA image features.
-3. Diffusion-statistics features.
+3. Learned diffusion-model features from a SAR DDPM denoiser.
 
 The image and diffusion branches are residual heads with zero-initialized final
 layers, so training starts exactly at the existing logits ensemble.
@@ -114,12 +114,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--diffusion-cache-dir",
-        default=Path("results/moe_classifier/SAR/feature_cache"),
+        default=Path("results/sar_finetune/deep_diffusion_features"),
         type=Path,
     )
     parser.add_argument(
         "--output-dir",
-        default=Path("results/sar_finetune/three_branch_diffusion_fusion"),
+        default=Path("results/sar_finetune/three_branch_deep_diffusion_fusion"),
         type=Path,
     )
     parser.add_argument(
@@ -160,7 +160,7 @@ def load_logits(
         path = logits_cache_path(cache_dir, run, split)
         if not path.exists():
             raise FileNotFoundError(
-                f"Missing logits cache: {path}. Run train_sar_diffusion_residual_fusion.py first."
+                f"Missing logits cache: {path}. Generate SAR TTA logits caches first."
             )
         payloads.append(torch.load(path, map_location="cpu", weights_only=False))
 
@@ -200,14 +200,34 @@ def load_diffusion_features(
     split: str,
     labels: torch.Tensor,
     samples: list[str],
-) -> torch.Tensor:
-    path = cache_dir / f"SAR_{split}_diffusion.pt"
+) -> tuple[torch.Tensor, dict[str, object]]:
+    path = cache_dir / f"SAR_{split}_deep_diffusion.pt"
     payload = torch.load(path, map_location="cpu", weights_only=False)
+    feature_type = payload.get("feature_type")
+    if feature_type != "deep_diffusion_ddpm":
+        raise ValueError(
+            f"Expected learned DDPM diffusion features in {path}, got {feature_type!r}. "
+            "Run scripts/extract_sar_deep_diffusion_features.py first."
+        )
     if not torch.equal(labels, payload["labels"].long()):
         raise ValueError(f"Diffusion label order mismatch: {path}")
     if samples != list(payload["paths"]):
         raise ValueError(f"Diffusion sample order mismatch: {path}")
-    return payload["features"].float()
+    metadata = {
+        key: payload[key]
+        for key in [
+            "feature_type",
+            "weights",
+            "checkpoint",
+            "feature_timesteps",
+            "image_size",
+            "timesteps",
+            "base_channels",
+            "time_dim",
+        ]
+        if key in payload
+    }
+    return payload["features"].float(), metadata
 
 
 def normalize_features(
@@ -318,18 +338,20 @@ def main() -> None:
 
     train_image = load_image_features(args.image_feature_dir, "train", image_views, train_labels)
     test_image = load_image_features(args.image_feature_dir, "test", image_views, test_labels)
-    train_diffusion = load_diffusion_features(
+    train_diffusion, train_diffusion_metadata = load_diffusion_features(
         args.diffusion_cache_dir,
         "train",
         train_labels,
         train_samples,
     )
-    test_diffusion = load_diffusion_features(
+    test_diffusion, test_diffusion_metadata = load_diffusion_features(
         args.diffusion_cache_dir,
         "test",
         test_labels,
         test_samples,
     )
+    if train_diffusion_metadata != test_diffusion_metadata:
+        raise ValueError("Train/test diffusion feature metadata mismatch")
 
     train_image, test_image, image_mean, image_std = normalize_features(train_image, test_image)
     train_diffusion, test_diffusion, diffusion_mean, diffusion_std = normalize_features(
@@ -367,6 +389,7 @@ def main() -> None:
         f"views={image_views}",
         flush=True,
     )
+    print(f"diffusion_metadata={train_diffusion_metadata}", flush=True)
 
     optimizer = torch.optim.AdamW(
         [parameter for parameter in model.parameters() if parameter.requires_grad],
@@ -470,6 +493,7 @@ def main() -> None:
         "runs": [str(run) for run in args.runs],
         "class_names": class_names,
         "image_views": image_views,
+        "diffusion_metadata": train_diffusion_metadata,
         "num_runs": len(args.runs),
         "image_dim": int(train_image.shape[1]),
         "diffusion_dim": int(train_diffusion.shape[1]),
@@ -501,6 +525,7 @@ def main() -> None:
             "diffusion_mean": diffusion_mean,
             "diffusion_std": diffusion_std,
             "class_names": class_names,
+            "diffusion_metadata": train_diffusion_metadata,
             "args": vars(args),
         },
         args.output_dir / "fusion.pt",

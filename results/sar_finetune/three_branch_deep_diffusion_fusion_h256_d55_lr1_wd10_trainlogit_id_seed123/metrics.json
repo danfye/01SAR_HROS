@@ -1,0 +1,191 @@
+{
+  "runs": [
+    "results/sar_finetune/resnet18_size160_seed42",
+    "results/sar_finetune/resnet18_size160_seed7",
+    "results/sar_finetune/resnet18_size160_seed123"
+  ],
+  "class_names": [
+    "airplane",
+    "beach",
+    "bridge",
+    "crosswalk",
+    "golf_course",
+    "oil_tank",
+    "Photovoltaic",
+    "river",
+    "runway",
+    "ship"
+  ],
+  "image_views": [
+    "identity"
+  ],
+  "diffusion_metadata": {
+    "feature_type": "deep_diffusion_ddpm",
+    "weights": "tiny_sar_ddpm_v1",
+    "checkpoint": "results/sar_finetune/deep_diffusion_features/diffusion_encoder.pt",
+    "feature_timesteps": [
+      0,
+      50,
+      100,
+      150
+    ],
+    "image_size": 64,
+    "timesteps": 200,
+    "base_channels": 32,
+    "time_dim": 128
+  },
+  "num_runs": 3,
+  "image_dim": 2048,
+  "diffusion_dim": 5376,
+  "hidden_dim": 256,
+  "dropout": 0.55,
+  "label_smoothing": 0.02,
+  "learning_rate": 0.0001,
+  "weight_decay": 0.1,
+  "train_logit_branch": true,
+  "base_train_accuracy": 1.0,
+  "base_test_accuracy": 0.9154545664787292,
+  "best_epoch": 187,
+  "best_test_accuracy": 0.9281818270683289,
+  "selected_train_loss": 0.018018769532442094,
+  "selected_test_loss": 0.35479949422857976,
+  "selected_train_accuracy": 1.0,
+  "selected_test_accuracy": 0.9281818270683289,
+  "image_scale": 0.17517977952957153,
+  "diffusion_scale": 0.13685858249664307,
+  "test_per_class_accuracy": {
+    "airplane": 0.8818181818181818,
+    "beach": 0.9272727272727272,
+    "bridge": 0.8454545454545455,
+    "crosswalk": 0.9272727272727272,
+    "golf_course": 0.8909090909090909,
+    "oil_tank": 0.9272727272727272,
+    "Photovoltaic": 0.990909090909091,
+    "river": 0.9181818181818182,
+    "runway": 0.9727272727272728,
+    "ship": 1.0
+  },
+  "test_confusion_matrix": [
+    [
+      97,
+      1,
+      4,
+      0,
+      1,
+      2,
+      0,
+      1,
+      3,
+      1
+    ],
+    [
+      1,
+      102,
+      4,
+      0,
+      0,
+      0,
+      0,
+      2,
+      0,
+      1
+    ],
+    [
+      1,
+      1,
+      93,
+      8,
+      0,
+      0,
+      0,
+      3,
+      0,
+      4
+    ],
+    [
+      0,
+      0,
+      0,
+      102,
+      0,
+      0,
+      7,
+      0,
+      1,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      1,
+      98,
+      0,
+      0,
+      8,
+      3,
+      0
+    ],
+    [
+      0,
+      1,
+      4,
+      3,
+      0,
+      102,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      109,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      3,
+      0,
+      4,
+      0,
+      0,
+      0,
+      101,
+      2,
+      0
+    ],
+    [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      107,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      110
+    ]
+  ],
+  "elapsed_seconds": 12.437480449676514
+}
